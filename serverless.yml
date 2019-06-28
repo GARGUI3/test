@@ -1,0 +1,40 @@
+service: test_service
+
+frameworkVersion: ">=1.0.0 <2.0.0"
+
+custom:
+    env: ${file(./production_variables.yml)}
+
+provider:
+    name: aws
+    runtime: python3.6
+    region: us-west-2
+    stage: ${self:custom.env.stage}
+    role: ${self:custom.env.roleArn}
+    deploymentBucket:
+        name: test-serverless
+    stackTags:
+        "kpulse:environment": ${self:custom.env.stage}
+        "kpulse:owner": test
+        "kpulse:product": test
+        "kpulse:source": test
+        "kpulse:application": test_service_api
+
+functions:
+
+    get_user:
+        handler: get_data/handler.main
+        name: ${self:custom.env.stage}
+        description: Get info from mongo DB
+        memorySize: 128
+        timeout: 90
+        environment:
+            mongoUrl: ${self:custom.env.urlMongo}
+            mongoDataBase: ${self:custom.env.dataBaseMongo}
+        events:
+            - http:
+                path: user
+                method: get
+
+plugins:
+  - serverless-python-requirements
